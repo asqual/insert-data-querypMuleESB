@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="8555e183-f142-4ddf-ac26-8276f46f0c41" doc:description="This application is to insert data in to database using query parameters." >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="1390c7ec-da0a-4469-8a77-d03855440c78" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="Asq@22w0rd#" database="northwind" />
+	</db:config>
+	<flow name="insert-data-querypFlow" doc:id="58374160-b3a7-49ae-bca5-1a09b8cf4984" >
+		<http:listener doc:name="Listener" doc:id="469281a2-869e-4657-8736-47098880c7a4" config-ref="HTTP_Listener_config" path="my-db" doc:description=" This application is to insert data in to database using query parameters." allowedMethods="PUT"/>
+		<logger level="INFO" doc:name="Logger" doc:id="a3bad53f-8ef2-47a9-9583-25f13492045d" message='#["The submitted regionId and regiondescription are: " ++ attributes.queryParams.regionId ++ " and " ++ attributes.queryParams.regiondescription]'/>
+		<db:insert doc:name="Insert into MySQL db" doc:id="c84dad65-31fd-41b1-bd2a-f632c9c65cc6" config-ref="Database_Config">
+			<db:sql ><![CDATA[INSERT INTO region (regionId, regiondescription)
+values (:regionId, :regiondescription)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{'regionId': attributes.queryParams.regionId,
+ 'regiondescription':attributes.queryParams.regiondescription
+}]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="Transform Message" doc:id="ed0bd955-28d6-42f3-a4ce-75e0de57489c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	'Message': "Data Inserted successfully ",
+	'Code': 200
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
